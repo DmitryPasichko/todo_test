@@ -1,0 +1,26 @@
+[
+  {
+    "model": "task.status",
+    "pk": 1,
+    "fields": {
+      "name": "Нова",
+      "key": "new"
+    }
+  },
+  {
+    "model": "task.Status",
+    "pk": 2,
+    "fields": {
+      "name": "В роботі",
+      "key": "in_progress"
+    }
+  },
+    {
+    "model": "task.Status",
+    "pk": 3,
+    "fields": {
+      "name": "Завершено",
+      "key": "done"
+    }
+  }
+]

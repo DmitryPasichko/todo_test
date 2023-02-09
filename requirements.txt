@@ -3,3 +3,9 @@ djangorestframework
 celery
 redis
 djangorestframework-simplejwt
+psycopg2
+Pillow
+python-dotenv
+django-rest-swagger
+django-filter
+drf-spectacular
