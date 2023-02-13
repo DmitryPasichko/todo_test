@@ -20,10 +20,10 @@ class OwnDocumentPermission(permissions.BasePermission):
         return (
             request.method in permissions.SAFE_METHODS
             or (
-                user in obj.assignee_ids.all()
+                user in obj.assignees.all()
                 and request.method in (*permissions.SAFE_METHODS, "PATCH", "POST")
             )
-            or user == obj.creator_id
+            or user == obj.creator
         )
 
 
@@ -50,7 +50,7 @@ class OwnCommentsPermission(permissions.BasePermission):
         )
         return (
             request.method in permissions.SAFE_METHODS
-            or user in task.assignee_ids.all()
-            or user == obj.creator_id
+            or user in task.assignees.all()
+            or user == obj.creator
             or user.is_superuser
         )

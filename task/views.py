@@ -28,8 +28,8 @@ class TaskViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         if self.request.FILES and "images" in self.request.FILES:
             context.update({"images": self.request.FILES.getlist("images")})
-        if "assignee_ids" in self.request.POST:
-            context.update({"assignee_ids": self.request.POST.get("assignee_ids", [])})
+        if "assignees" in self.request.POST:
+            context.update({"assignees": self.request.POST.get("assignees", [])})
         return context
 
     @action(
@@ -54,7 +54,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             "text": text,
             "level": 0,
             "task": task.pk,
-            "creator_id": user_id,
+            "creator": user_id,
         }
         serializer = CommentSerializer(data=data)
         serializer.is_valid(raise_exception=True)

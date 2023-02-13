@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "task",
     "django_filters",
     "rest_framework_swagger",
+    'django_extensions',
 ]
 
 MIDDLEWARE = [

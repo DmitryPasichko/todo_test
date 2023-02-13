@@ -38,20 +38,20 @@ class TaskSerializer(ModelSerializer):
                     child_level_2.append(
                         {
                             "text": c2.text,
-                            "creator_name": c2.creator_id.username,
+                            "creator_name": c2.creator.username,
                         }
                     )
                 child_level_1.append(
                     {
                         "text": c1.text,
-                        "creator_name": c1.creator_id.username,
+                        "creator_name": c1.creator.username,
                         "comments": child_level_2,
                     }
                 )
             result.append(
                 {
                     "text": comment.text,
-                    "creator_name": comment.creator_id.username,
+                    "creator_name": comment.creator.username,
                     "comments": child_level_1,
                 }
             )
@@ -65,7 +65,7 @@ class TaskSerializer(ModelSerializer):
         :return:
         """
         for image in images:
-            image = Image(image=image, task_id=task)
+            image = Image(image=image, task=task)
             image.save()
 
     def validate_status(self, status):
@@ -77,7 +77,7 @@ class TaskSerializer(ModelSerializer):
         """
         if (
             status.key in ["new", "done"]
-            and self.instance and self.context["request"].user in self.instance.assignee_ids.all()
+            and self.instance and self.context["request"].user in self.instance.assignees.all()
         ):
             raise ValidationError("Permission denied, you can't change status")
 
@@ -102,6 +102,6 @@ class CommentSerializer(ModelSerializer):
         parent_comment = validated_data.get("parent_comment")
         level = parent_comment.level + 1 if parent_comment else 0
         validated_data["level"] = level
-        validated_data["creator_id"] = self.context["request"].user
+        validated_data["creator"] = self.context["request"].user
         instance = super().create(validated_data)
         return instance

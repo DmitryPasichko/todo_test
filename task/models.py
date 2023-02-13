@@ -32,10 +32,10 @@ class Task(models.Model):
     create_date = models.DateTimeField(verbose_name="Created", auto_now_add=True)
     update_date = models.DateTimeField(verbose_name="Updated", auto_now=True)
 
-    creator_id = models.ForeignKey(
+    creator = models.ForeignKey(
         User, related_name="created", on_delete=models.CASCADE
     )
-    assignee_ids = models.ManyToManyField(
+    assignees = models.ManyToManyField(
         User, verbose_name="Assignee names", blank=True
     )
 
@@ -54,13 +54,13 @@ class Task(models.Model):
         """
         Send invitations for all user connected to task
         :param instance:
-        :param assignee_ids:
+        :param assignees:
         :param is_create:
         :return:
         """
-        emails = [self.creator_id.email]
-        if self.assignee_ids:
-            assignee = self.assignee_ids.all().values("email")
+        emails = [self.creator.email]
+        if self.assignees:
+            assignee = self.assignees.all().values("email")
             emails.extend([email["email"] for email in assignee if email["email"]])
         send_invitation_emails.delay(emails, self.title)
 
@@ -76,7 +76,7 @@ class Image(models.Model):
     Model that helps to save several images in task
     """
     image = models.ImageField()
-    task_id = models.ForeignKey(Task, related_name="image", on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, related_name="image", on_delete=models.CASCADE)
 
 
 class Comment(models.Model):
@@ -86,7 +86,7 @@ class Comment(models.Model):
     text = models.TextField()
     level = models.PositiveSmallIntegerField(default=0, validators=[validate_level(2)])
 
-    creator_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE)
     parent_comment = models.ForeignKey(
         "self", on_delete=models.CASCADE, blank=True, null=True, related_name="children"
     )
