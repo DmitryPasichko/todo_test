@@ -1,0 +1,129 @@
+version: '3'
+volumes:
+  odoo-db-data:
+  odoo-rd-data:
+
+  ds-session-data:
+  ds-storage-data:
+
+  dp-session-data:
+  dp-storage-data:
+
+services:
+  postgres_db:
+    env_file: .env
+    image: postgres:12.13-alpine
+    container_name: postgresql_db
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ../services/data/db_data:/var/lib/postgresql/data/pgdata
+
+  minio1:
+    image: minio/minio:latest
+    container_name: minio1
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ./services/data/minio/data1:/data1
+      - ./services/data/minio/data2:/data2
+      - ./services/data/minio/data:/data
+    environment:
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+    command: server /data
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+
+  task_project:
+    build: .
+    depends_on:
+      - postgres_db
+#      - redis
+    ports:
+      - 8000:8000
+
+
+#------------KAFKA-------------KAFKA----------------KAFKA----------------KAFKA---------------------KAFKA---------------#
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:5.4.0
+#    hostname: zookeeper
+#    container_name: zookeeper
+#    ports:
+#      - "2181:2181"
+#    environment:
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#
+#  broker:
+#    image: confluentinc/cp-server:5.4.0
+#    hostname: broker
+#    container_name: broker
+#    depends_on:
+#      - zookeeper
+#    ports:
+#      - "9092:9092"
+#      - "29092:29092"
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+#      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+#      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+#      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+#      CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
+#      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
+#      CONFLUENT_METRICS_ENABLE: "true"
+#      CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
+#
+#  kafka-tools:
+#    image: confluentinc/cp-kafka:5.4.0
+#    hostname: kafka-tools
+#    container_name: kafka-tools
+#    command: [ "tail", "-f", "/dev/null" ]
+#    network_mode: "host"
+#
+#  schema-registry:
+#    image: confluentinc/cp-schema-registry:5.4.0
+#    hostname: schema-registry
+#    container_name: schema-registry
+#    depends_on:
+#      - zookeeper
+#      - broker
+#    ports:
+#      - "8081:8081"
+#    environment:
+#      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+#      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper:2181"
+#
+#  control-center:
+#    image: confluentinc/cp-enterprise-control-center:5.4.0
+#    hostname: control-center
+#    container_name: control-center
+#    depends_on:
+#      - zookeeper
+#      - broker
+#      - schema-registry
+#    ports:
+#      - "9021:9021"
+#    environment:
+#      CONTROL_CENTER_BOOTSTRAP_SERVERS: 'broker:29092'
+#      CONTROL_CENTER_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+#      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+#      CONTROL_CENTER_REPLICATION_FACTOR: 1
+#      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
+#      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
+#      CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+#      PORT: 9021
+
