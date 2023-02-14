@@ -1,13 +1,4 @@
 version: '3'
-volumes:
-  odoo-db-data:
-  odoo-rd-data:
-
-  ds-session-data:
-  ds-storage-data:
-
-  dp-session-data:
-  dp-storage-data:
 
 services:
   postgres_db:
@@ -23,7 +14,8 @@ services:
     volumes:
       - ../services/data/db_data:/var/lib/postgresql/data/pgdata
 
-  minio1:
+  minio:
+    env_file: .env
     image: minio/minio:latest
     container_name: minio1
     ports:
@@ -39,6 +31,7 @@ services:
     command: server /data
 
   redis:
+    env_file: .env
     image: redis:latest
     ports:
       - 6379:6379

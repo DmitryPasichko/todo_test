@@ -10,3 +10,4 @@ django-rest-swagger
 django-filter
 drf-spectacular
 django-extensions
+django-storages

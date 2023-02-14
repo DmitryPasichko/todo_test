@@ -75,7 +75,7 @@ class Image(models.Model):
     """
     Model that helps to save several images in task
     """
-    image = models.ImageField()
+    image = models.ImageField(upload_to="tasks")
     task = models.ForeignKey(Task, related_name="image", on_delete=models.CASCADE)
 
 

@@ -151,14 +151,16 @@ REST_FRAMEWORK = {
 }
 MEDIA_ROOT = 'media/'
 
+# Email settings
 EMAIL_USE_TLS = True
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 
-REDIS_HOST = os.getenv("REDIS_HOST") or "0.0.0.0"
-REDIS_PORT = os.getenv("REDIS_PORT") or "6379"
+# Celery settings
+REDIS_HOST = os.environ.get("REDIS_HOST", "0.0.0.0")
+REDIS_PORT = os.environ.get("REDIS_PORT", "6379")
 CELERY_BROKER_URL = "redis://" + REDIS_HOST + ":" + REDIS_PORT + "/0"
 CELERY_BROKER_TRANSPORT_OPTIONS = {"visibilite_timeout": 3600}
 CELERY_RESULT_BACKEND = "redis://" + REDIS_HOST + ":" + REDIS_PORT + "/0"
@@ -166,12 +168,13 @@ CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
+# JWT settings
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(
-        minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME_MINUTES") or 5)
+        minutes=int(os.environ.get("ACCESS_TOKEN_LIFETIME_MINUTES", 5))
     ),
     "REFRESH_TOKEN_LIFETIME": timedelta(
-        days=int(os.getenv("REFRESH_TOKEN_LIFETIME_DAYS") or 1)
+        days=int(os.environ.get("REFRESH_TOKEN_LIFETIME_DAYS", 1))
     ),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
@@ -194,9 +197,25 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti",
     "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
     "SLIDING_TOKEN_LIFETIME": timedelta(
-        minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME_MINUTES") or 5)
+        minutes=int(os.environ.get("ACCESS_TOKEN_LIFETIME_MINUTES", 5))
     ),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(
-        days=int(os.getenv("REFRESH_TOKEN_LIFETIME_DAYS") or 1)
+        days=int(os.environ.get("REFRESH_TOKEN_LIFETIME_DAYS", 1))
     ),
 }
+
+# Minio
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+MINIO_ACCESS_KEY = os.getenv("MINIO_ROOT_USER")
+MINIO_SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD")
+MINIO_BUCKET_NAME = os.getenv("MINIO_BUCKET_NAME")
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT")
+
+AWS_ACCESS_KEY_ID = MINIO_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY = MINIO_SECRET_KEY
+AWS_STORAGE_BUCKET_NAME = MINIO_BUCKET_NAME
+AWS_S3_ENDPOINT_URL = MINIO_ENDPOINT
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = True
+AWS_S3_FILE_OVERWRITE = False
