@@ -91,5 +91,5 @@ class Comment(models.Model):
         "self", on_delete=models.CASCADE, blank=True, null=True, related_name="children"
     )
     task = models.ForeignKey(
-        Task, on_delete=models.CASCADE, blank=True, null=True, related_name="comments"
+        Task, on_delete=models.CASCADE, blank=True, null=True
     )

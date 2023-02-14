@@ -1,14 +1,38 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from .models import Task, Comment, Image
-from django.contrib.auth.models import User
-from .tasks import send_invitation_emails
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 
 
+class ParentCommentSerializer(serializers.ModelSerializer):
+    def to_representation(self, value):
+        serializer_data = CommentSerializer(value).data
+        return serializer_data
+
+    class Meta:
+        model = Comment
+        fields = "__all__"
+
+
+class CommentSerializer(ModelSerializer):
+    parent_comment = ParentCommentSerializer(source="children", many=True)
+
+    class Meta:
+        model = Comment
+        fields = "__all__"
+
+    def create(self, validated_data):
+        parent_comment = validated_data.get("parent_comment")
+        level = parent_comment.level + 1 if parent_comment else 0
+        validated_data["level"] = level
+        validated_data["creator"] = self.context["request"].user
+        instance = super().create(validated_data)
+        return instance
+
+
 class TaskSerializer(ModelSerializer):
     images = SerializerMethodField()
-    comments = SerializerMethodField()
+    comments = CommentSerializer(source='comment_set', many=True, required=False,)
 
     class Meta:
         model = Task
@@ -23,36 +47,6 @@ class TaskSerializer(ModelSerializer):
                     "name": image.image.name,
                     "size": image.image.size,
                     "url": image.image.url,
-                }
-            )
-        return result
-
-    def get_comments(self, obj):
-        comments = obj.comments.all()
-        result = []
-        for comment in comments:
-            child_level_1 = []
-            for c1 in comment.children.all():
-                child_level_2 = []
-                for c2 in c1.children.all():
-                    child_level_2.append(
-                        {
-                            "text": c2.text,
-                            "creator_name": c2.creator.username,
-                        }
-                    )
-                child_level_1.append(
-                    {
-                        "text": c1.text,
-                        "creator_name": c1.creator.username,
-                        "comments": child_level_2,
-                    }
-                )
-            result.append(
-                {
-                    "text": comment.text,
-                    "creator_name": comment.creator.username,
-                    "comments": child_level_1,
                 }
             )
         return result
@@ -93,15 +87,4 @@ class TaskSerializer(ModelSerializer):
         return instance
 
 
-class CommentSerializer(ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = "__all__"
 
-    def create(self, validated_data):
-        parent_comment = validated_data.get("parent_comment")
-        level = parent_comment.level + 1 if parent_comment else 0
-        validated_data["level"] = level
-        validated_data["creator"] = self.context["request"].user
-        instance = super().create(validated_data)
-        return instance
