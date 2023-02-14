@@ -47,6 +47,28 @@ class TaskViewSet(viewsets.ModelViewSet):
         :param pk:
         :return:
         """
+        serializer = CommentSerializer(
+            data={**request.data, "task": pk}, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=(
+            OwnDocumentPermission,
+            IsAuthenticated,
+        ),
+    )
+    def images(self, request, pk=None):
+        """
+        Add new images to task
+        :param request:
+        :param pk:
+        :return:
+        """
         task = self.get_object()
         user_id = request.user.pk
         text = request.data.get("comment")

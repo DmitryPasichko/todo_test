@@ -1,7 +1,8 @@
-from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from rest_framework.serializers import ModelSerializer
 from .models import Task, Comment, Image
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
+from .tasks import upload_images_to_task
 
 
 class ParentCommentSerializer(serializers.ModelSerializer):
@@ -15,7 +16,10 @@ class ParentCommentSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(ModelSerializer):
-    parent_comment = ParentCommentSerializer(source="children", many=True)
+    parent_comment = ParentCommentSerializer(
+        source="children", many=True, required=False
+    )
+    creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = Comment
@@ -25,14 +29,23 @@ class CommentSerializer(ModelSerializer):
         parent_comment = validated_data.get("parent_comment")
         level = parent_comment.level + 1 if parent_comment else 0
         validated_data["level"] = level
-        validated_data["creator"] = self.context["request"].user
         instance = super().create(validated_data)
         return instance
 
 
+class ImageSerializer(ModelSerializer):
+    class Meta:
+        model = Image
+        fields = ["image"]
+
+
 class TaskSerializer(ModelSerializer):
-    images = SerializerMethodField()
-    comments = CommentSerializer(source='comment_set', many=True, required=False,)
+    images = ImageSerializer(source="image", many=True, required=False)
+    comments = CommentSerializer(
+        source="comment_set",
+        many=True,
+        required=False,
+    )
 
     class Meta:
         model = Task
@@ -71,20 +84,13 @@ class TaskSerializer(ModelSerializer):
         """
         if (
             status.key in ["new", "done"]
-            and self.instance and self.context["request"].user in self.instance.assignees.all()
+            and self.instance
+            and self.context["request"].user in self.instance.assignees.all()
         ):
             raise ValidationError("Permission denied, you can't change status")
 
     def create(self, validated_data):
         instance = super().create(validated_data)
-        self.pin_images(self.context.get("Images", []), instance)
+        # if "images" in self.context:
+        #     upload_images_to_task.delay(self.context.get("images", []), instance.id)
         return instance
-
-    def update(self, instance, validated_data):
-        # self.check_status(instance)
-        instance = super().update(instance, validated_data)
-        self.pin_images(self.context.get("images", []), instance)
-        return instance
-
-
-
