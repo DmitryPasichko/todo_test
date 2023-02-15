@@ -1,5 +1,9 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from django.db import models
 from django.contrib.auth.models import User
+
 from .validators import validate_level
 from .tasks import send_invitation_emails
 

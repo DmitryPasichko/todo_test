@@ -1,3 +1,6 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from django.contrib import admin
 from .models import *
 

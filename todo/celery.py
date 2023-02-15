@@ -1,6 +1,8 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 import os
 from celery import Celery
-from celery.schedules import crontab
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "todo.settings")
 

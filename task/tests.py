@@ -1,3 +1,6 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from django.test import TestCase
 from django.test import Client
 from django.conf import settings

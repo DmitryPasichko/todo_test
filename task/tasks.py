@@ -1,3 +1,6 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from django.core.mail import send_mail
 from django.conf import settings
 from celery import shared_task

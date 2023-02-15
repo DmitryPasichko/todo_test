@@ -1,14 +1,19 @@
-from .models import Task, Comment
-from .serializers import TaskSerializer, CommentSerializer
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import mixins
 from rest_framework import viewsets
 from rest_framework.response import Response
-from .permissions import OwnDocumentPermission
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.decorators import action
-from rest_framework import mixins
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 import django_filters
+
 from .filters import TaskFilter
+from .models import Task, Comment
+from .permissions import OwnDocumentPermission
+from .serializers import TaskSerializer, CommentSerializer, ImageSerializer
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -26,8 +31,6 @@ class TaskViewSet(viewsets.ModelViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        if self.request.FILES and "images" in self.request.FILES:
-            context.update({"images": self.request.FILES.getlist("images")})
         if "assignees" in self.request.POST:
             context.update({"assignees": self.request.POST.get("assignees", [])})
         return context
@@ -51,7 +54,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             data={**request.data, "task": pk}, context=self.get_serializer_context()
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(creator=request.user)
         return Response(serializer.data)
 
     @action(
@@ -62,23 +65,18 @@ class TaskViewSet(viewsets.ModelViewSet):
             IsAuthenticated,
         ),
     )
-    def images(self, request, pk=None):
+    def image(self, request, pk=None):
         """
-        Add new images to task
+        Add new image to task
         :param request:
         :param pk:
         :return:
         """
-        task = self.get_object()
-        user_id = request.user.pk
-        text = request.data.get("comment")
         data = {
-            "text": text,
-            "level": 0,
-            "task": task.pk,
-            "creator": user_id,
+            "image": request.FILES.get("image"),
+            "task": pk,
         }
-        serializer = CommentSerializer(data=data)
+        serializer = ImageSerializer(data=data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)

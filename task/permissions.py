@@ -1,3 +1,6 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from rest_framework import permissions
 
 

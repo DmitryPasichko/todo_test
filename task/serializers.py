@@ -1,8 +1,10 @@
-from rest_framework.serializers import ModelSerializer
-from .models import Task, Comment, Image
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
-from .tasks import upload_images_to_task
+
+from .models import Task, Comment, Image
 
 
 class ParentCommentSerializer(serializers.ModelSerializer):
@@ -15,11 +17,11 @@ class ParentCommentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class CommentSerializer(ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     parent_comment = ParentCommentSerializer(
         source="children", many=True, required=False
     )
-    creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    creator = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Comment
@@ -33,13 +35,13 @@ class CommentSerializer(ModelSerializer):
         return instance
 
 
-class ImageSerializer(ModelSerializer):
+class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
-        fields = ["image"]
+        fields = ["image", "task"]
 
 
-class TaskSerializer(ModelSerializer):
+class TaskSerializer(serializers.ModelSerializer):
     images = ImageSerializer(source="image", many=True, required=False)
     comments = CommentSerializer(
         source="comment_set",
@@ -50,30 +52,6 @@ class TaskSerializer(ModelSerializer):
     class Meta:
         model = Task
         fields = "__all__"
-
-    def get_images(self, obj):
-        images = obj.image.all()
-        result = []
-        for image in images:
-            result.append(
-                {
-                    "name": image.image.name,
-                    "size": image.image.size,
-                    "url": image.image.url,
-                }
-            )
-        return result
-
-    def pin_images(self, images, task):
-        """
-        Add images to Task
-        :param images:
-        :param task:
-        :return:
-        """
-        for image in images:
-            image = Image(image=image, task=task)
-            image.save()
 
     def validate_status(self, status):
         """
@@ -91,6 +69,4 @@ class TaskSerializer(ModelSerializer):
 
     def create(self, validated_data):
         instance = super().create(validated_data)
-        # if "images" in self.context:
-        #     upload_images_to_task.delay(self.context.get("images", []), instance.id)
         return instance

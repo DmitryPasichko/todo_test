@@ -1,3 +1,6 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 import django_filters
 from .models import Task
 

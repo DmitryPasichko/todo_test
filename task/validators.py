@@ -1,5 +1,9 @@
-from django.core.exceptions import ValidationError
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from functools import wraps
+
+from django.core.exceptions import ValidationError
 
 
 def validate_level(max_level):
