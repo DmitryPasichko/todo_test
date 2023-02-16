@@ -12,6 +12,7 @@ schema_view = get_swagger_view(title="Pastebin API")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", include("task.urls")),
+    path("shop/", include("shop.urls")),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
         "docs/",

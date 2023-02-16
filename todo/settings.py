@@ -35,9 +35,11 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "task",
+    "shop",
     "django_filters",
     "rest_framework_swagger",
     'django_extensions',
+    "django_countries",
 ]
 
 MIDDLEWARE = [
@@ -122,11 +124,13 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
-
+# STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
+MEDIA_ROOT = 'media/'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -140,7 +144,6 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
-MEDIA_ROOT = 'media/'
 
 # Email settings
 EMAIL_USE_TLS = True
