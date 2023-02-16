@@ -22,9 +22,9 @@ services:
       - 9000:9000
       - 9001:9001
     volumes:
-      - ./services/data/minio/data1:/data1
-      - ./services/data/minio/data2:/data2
-      - ./services/data/minio/data:/data
+      - ../services/data/minio/data1:/data1
+      - ../services/data/minio/data2:/data2
+      - ../services/data/minio/data:/data
     environment:
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
