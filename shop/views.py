@@ -1,44 +1,18 @@
-from django.http import HttpResponse
-from django.template import loader
+from rest_framework.viewsets import ModelViewSet
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 
-def index(request):
-    template = loader.get_template('shop/index.html')
-    context = {
-    }
-    return HttpResponse(template.render(context, request))
+from .serializers import ProductSerializer
+from .models import Product
 
 
-def about(request):
-    template = loader.get_template('shop/about.html')
-    context = {
-    }
-    return HttpResponse(template.render(context, request))
-
-
-def products(request):
-    template = loader.get_template('shop/products.html')
-    context = {
-    }
-    return HttpResponse(template.render(context, request))
-
-
-def fashion(request):
-    template = loader.get_template('shop/fashion.html')
-    context = {
-    }
-    return HttpResponse(template.render(context, request))
-
-
-def news(request):
-    template = loader.get_template('shop/news.html')
-    context = {
-    }
-    return HttpResponse(template.render(context, request))
-
-
-def contacts(request):
-    template = loader.get_template('shop/contact.html')
-    context = {
-    }
-    return HttpResponse(template.render(context, request))
+class ProductView(ModelViewSet):
+    serializer_class = ProductSerializer
+    queryset = Product.objects.all()
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+    )

@@ -2,17 +2,13 @@
 # Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
 ######################################################################
 from django.urls import path, include
-from rest_framework_swagger.views import get_swagger_view
 from .views import *
+from rest_framework.routers import DefaultRouter
 
-schema_view = get_swagger_view(title="Pastebin API")
+router = DefaultRouter()
+router.register(r"product", ProductView, basename="product")
 
 
 urlpatterns = [
-    path("", index),
-    path("about/", about),
-    path("products/", products),
-    path("fashion/", fashion),
-    path("news/", news),
-    path("contact/", contacts),
+    path("", include(router.urls)),
 ]

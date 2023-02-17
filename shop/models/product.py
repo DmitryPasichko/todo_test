@@ -11,3 +11,6 @@ class Product(models.Model):
     features = None  # Todo
     quantity_on_hand = models.PositiveSmallIntegerField()
     description = models.TextField()
+
+    def __str__(self):
+        return self.name
