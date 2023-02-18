@@ -1,12 +1,17 @@
 ######################################################################
 # Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
 ######################################################################
-from django.urls import path, include
-from .views import *
 from rest_framework.routers import DefaultRouter
+from django.urls import path, include
+from rest_framework_swagger.renderers import OpenAPIRenderer, SwaggerUIRenderer
 
-router = DefaultRouter()
+from .views import *
+
+router = DefaultRouter(
+    root_renderers=[OpenAPIRenderer, SwaggerUIRenderer]
+)
 router.register(r"product", ProductView, basename="product")
+router.register(r"order", OrderView, basename="order")
 
 
 urlpatterns = [
