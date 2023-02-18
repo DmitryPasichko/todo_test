@@ -1,9 +1,9 @@
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
 from rest_framework.test import APIClient, APITestCase
 
-from .models import Product, Line, Order, Category
+from shop.models import Product, Category
 
 TEST_USER_NAME = "test_user"
 TEST_USER_email = "test_user@yopmail.com"
