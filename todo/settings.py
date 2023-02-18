@@ -87,6 +87,9 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST") or "0.0.0.0",
         "PORT": os.getenv("DB_PORT") or "5432",
+        'TEST': {
+            'NAME': 'test_database',
+        },
     }
 }
 
@@ -143,6 +146,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 
 # Email settings
