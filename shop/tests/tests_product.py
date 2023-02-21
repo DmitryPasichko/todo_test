@@ -1,3 +1,6 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
@@ -237,4 +240,3 @@ class ProductAPITestCase(APITestCase):
             expected_error_msg,
             f"Expected {expected_error_msg} status but {str(response.data[error_field_name][0])} was got",
         )
-

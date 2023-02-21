@@ -1,8 +1,11 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from rest_framework.test import APIClient, APITestCase
 
-from shop.models import Product, Line, Order, Category
+from shop.models import Product, Order, Category
 
 TEST_USER_NAME = "test_user"
 TEST_USER_email = "test_user@yopmail.com"
@@ -93,15 +96,7 @@ class OrderAPITestCase(APITestCase):
     def test_post_order(self):
         expected_success_status = 201
         expected_failed_status = 401
-        payload = {
-            "lines": [
-                {
-                    "product": self.product2.id,
-                    "quantity": 2
-                }
-            ]
-
-        }
+        payload = {"lines": [{"product": self.product2.id, "quantity": 2}]}
 
         response = self.client.post("/shop/order/", data=payload)
         self.assertEqual(
@@ -117,4 +112,3 @@ class OrderAPITestCase(APITestCase):
             expected_success_status,
             f"Expected {expected_success_status} status but {response.status_code} was got",
         )
-

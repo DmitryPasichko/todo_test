@@ -1,3 +1,7 @@
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
+
 from rest_framework import serializers
 from django.core.exceptions import ValidationError
 
@@ -23,9 +27,24 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class OrderLineSerializer(serializers.ModelSerializer):
+    price = serializers.SerializerMethodField(read_only=True)
+    is_skipped = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = Line
-        fields = ("product", "quantity")
+        fields = ("product", "quantity", "price", "is_skipped")
+
+    def get_price(self, instance):
+        return float(instance.product_price * instance.quantity)
+
+
+class OrderLineFullSerializer(OrderLineSerializer):
+    is_skipped = serializers.BooleanField(required=False)
+    price = serializers.FloatField(required=False)
+
+    class Meta:
+        model = Line
+        fields = ("product", "quantity", "price", "is_skipped", "product_price")
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -36,6 +55,18 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = "__all__"
+
+    def create(self, validated_data: dict):
+        self.prepare_calculated_fields(validated_data)
+        lines_data = validated_data.pop("shop_line_related")
+        new_order = Order.objects.create(**validated_data)
+
+        l_result = self.create_lines(lines_data, new_order)
+        if l_result:
+            new_order.total_cost = self.get_total_cost(l_result)
+            new_order.save()
+
+        return new_order
 
     def validate_status(self, status):
         if self.instance and self.instance.status in ["DONE", "CANCELLED"]:
@@ -52,18 +83,25 @@ class OrderSerializer(serializers.ModelSerializer):
             raise ValidationError("Sorry, impossible to change status")
         return status
 
-    def create(self, validated_data):
-        lines_data = validated_data.pop("shop_line_related")
-        new_order = Order.objects.create(**validated_data)
-        for line_data in lines_data:
-            Line.objects.create(order=new_order, **line_data)
+    @staticmethod
+    def create_lines(lines: dict, new_order: Order) -> dict:
+        for line_data in lines:
+            line_data["order"] = new_order.pk
+            line_data["product"] = line_data["product"].pk
+        serializer = OrderLineFullSerializer(data=lines, many=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return serializer.data
+        # for line_data in lines:
+        #     product = line_data.get("product")
+        #     quantity = line_data.get("quantity")
+        #     success = product.write_off_product(quantity)
+        #     Line.objects.create(**line_data, is_skipped=not success, order=new_order)
 
-        new_order.update_total_cost()
-        return new_order
-
-    def update(self, instance, validated_data):
-        new_order = super().update(instance, validated_data)
-        if "status" in validated_data:
-            new_order.update_specific_status_date()
-
-        return new_order
+    @staticmethod
+    def get_total_cost(lines: dict) -> float:
+        new_total_cost = 0
+        for line in lines:
+            if not line["is_skipped"]:
+                new_total_cost += line["product_price"] * line["quantity"]
+        return new_total_cost

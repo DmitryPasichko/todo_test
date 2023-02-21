@@ -1,7 +1,9 @@
-from datetime import datetime
-
+######################################################################
+# Copyright (c) 2023 Dmitry Pasichko. All rights reserved. #
+######################################################################
 from django.db import models
-from django.db.models import signals
+
+from ..validators import validate_line_quantity
 
 ORDER_STATUSES = [
     ("NEW", "NEW"),
@@ -32,28 +34,10 @@ class Order(models.Model):
     class Meta:
         ordering = ["-created", "status"]
 
-    def update_total_cost(self):
-        new_total_cost = 0
-        for line in self.shop_line_related.all():
-            new_total_cost += line.product.price * line.quantity
-        self.total_cost = new_total_cost
-        self.save()
-
-    def update_specific_status_date(self):
-        now_date = datetime.now()
-        match self.status:
-            case "CANCELLED":
-                self.cancelled_date = now_date
-            case "DONE":
-                self.finish_date = now_date
-            case "ACCEPTED":
-                self.accepted_date = now_date
-            case _:
-                pass
-        self.save()
-
 
 class Line(models.Model):
     order = models.ForeignKey("shop.Order", on_delete=models.CASCADE, related_name='%(app_label)s_%(class)s_related')
     product = models.ForeignKey("shop.Product", on_delete=models.CASCADE)
-    quantity = models.PositiveSmallIntegerField()
+    quantity = models.PositiveSmallIntegerField(validators=[validate_line_quantity])
+    is_skipped = models.BooleanField(default=False)
+    product_price = models.FloatField(default=0)
