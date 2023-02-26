@@ -12,3 +12,7 @@ drf-spectacular
 django-extensions
 django-storages
 django-countries
+
+
+#telegram
+aiogram

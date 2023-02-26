@@ -37,7 +37,7 @@ class Order(models.Model):
 
 class Line(models.Model):
     order = models.ForeignKey("shop.Order", on_delete=models.CASCADE, related_name='%(app_label)s_%(class)s_related')
-    product = models.ForeignKey("shop.Product", on_delete=models.CASCADE)
+    product = models.ForeignKey("shop.Product", on_delete=models.CASCADE, related_name='%(app_label)s_%(class)s_related')
     quantity = models.PositiveSmallIntegerField(validators=[validate_line_quantity])
     is_skipped = models.BooleanField(default=False)
     product_price = models.FloatField(default=0)
