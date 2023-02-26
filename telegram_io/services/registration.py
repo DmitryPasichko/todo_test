@@ -1,7 +1,6 @@
 # from RaccoonPayWebService.models.client_profile import Profile
 # from djmoney.money import Money
 from django_countries import Countries
-from django.utils.translation import gettext as _
 
 
 async def get_or_register_user(
@@ -35,8 +34,8 @@ def get_country_by_name(country_name):
 
 
 def get_welcome_back_message_for_user(user) -> str:
-    return _(
-        "Welcome back to Racoon Pay! Your Account data is:\nFirst name: {}\nLast name: {}\nPhone number: {}\nCountry: {}\nCurrency: {}"
+    return (
+        "Welcome back to Gallant Clothes! Your Account data is:\nFirst name: {}\nLast name: {}\nPhone number: {}\nCountry: {}\nCurrency: {}"
     ).format(
         user.first_name,
         user.last_name,
@@ -47,12 +46,14 @@ def get_welcome_back_message_for_user(user) -> str:
 
 
 def get_welcome_message() -> str:
-    return _("Welcome to Racoon Pay! Do you want to sign up?")
+    return "Welcome to Gallant Clothes! Do you want to sign up?"
 
 
 def get_agree_registration_message() -> str:
-    return _(
+    return (
         "For sign up, please, share with us your contact data. "
         "By clicking “Accept & Share my Contact” button you accept and "
         "agree with “Privacy Policy”, “Terms & Conditions” and “Public Offer” statements"
     )
+
+

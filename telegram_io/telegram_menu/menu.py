@@ -15,7 +15,7 @@ button_no = InlineKeyboardButton(
     "No, close and exit", callback_data="decline_registration"
 )
 button_show_advantages = InlineKeyboardButton(
-    "Show me Racoon Pay advantages", callback_data="show_advantages"
+    "Show me Gallant Clothes advantages", callback_data="show_advantages"
 )
 button_change_lang = InlineKeyboardButton(
     "Change Language", callback_data="change_language"
