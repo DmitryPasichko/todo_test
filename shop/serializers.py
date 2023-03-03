@@ -8,6 +8,23 @@ from django.core.exceptions import ValidationError
 from shop.models import *
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TelegramUser
+        fields = (
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "external_id",
+            "country",
+            "language",
+            "balance",
+        )
+
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -70,4 +87,3 @@ class OrderSerializer(serializers.ModelSerializer):
         ):
             raise ValidationError("Sorry, impossible to change status")
         return status
-

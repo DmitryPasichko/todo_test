@@ -10,6 +10,7 @@ from .views import *
 router = DefaultRouter(
     root_renderers=[OpenAPIRenderer, SwaggerUIRenderer]
 )
+router.register(r"user", UserView, basename="user")
 router.register(r"product", ProductView, basename="product")
 router.register(r"order", OrderView, basename="order")
 

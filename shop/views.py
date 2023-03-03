@@ -4,13 +4,17 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, ListModelMixin
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from django_filters.rest_framework import DjangoFilterBackend
 
 
-from .models import Product
 from .services import OrderService
-from .serializers import ProductSerializer, OrderSerializer
+from .filters import TelegramUserFilter
+from .models import Product, TelegramUser
+from .serializers import ProductSerializer, OrderSerializer, UserSerializer
 
 
 class BaseAuthorizedView(ModelViewSet):
@@ -18,6 +22,17 @@ class BaseAuthorizedView(ModelViewSet):
         JWTAuthentication,
     ]
     permission_classes = (IsAuthenticatedOrReadOnly,)
+
+
+class UserView(ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    authentication_classes = [
+        JWTAuthentication,
+    ]
+    permission_classes = (IsAdminUser,)
+    serializer_class = UserSerializer
+    queryset = TelegramUser.objects.all()
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TelegramUserFilter
 
 
 class ProductView(BaseAuthorizedView):
