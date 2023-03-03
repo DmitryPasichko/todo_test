@@ -17,3 +17,5 @@ django-countries
 #telegram
 aiogram
 phonenumbers
+aiohttp
+pydantic
