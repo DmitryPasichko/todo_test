@@ -39,9 +39,9 @@ def get_welcome_back_message_for_user(user) -> str:
     ).format(
         user.first_name,
         user.last_name,
-        user.phone_number,
+        user.phone,
         user.country,
-        user.balance_currency,
+        user.balance,
     )
 
 

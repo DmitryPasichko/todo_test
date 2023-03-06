@@ -10,7 +10,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from django.utils import translation
 
-from services.user_functions import find_user_by_external_id
+from services.user_functions import AdminApi
 
 from management.commands.message_handlers.system import register_handlers_system
 # from management.commands.message_handlers.payment import register_handlers_payment
@@ -20,6 +20,7 @@ from management.commands.message_handlers.user_command import register_handlers_
 
 dotenv.load_dotenv()
 logger = logging.getLogger("Bot INIT")
+admin_api = AdminApi()
 
 def get_bot_instance():
     return Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
@@ -39,8 +40,7 @@ def user_language(func):
             elif isinstance(args[0], Message):
                 user_id = args[0].from_user.id
             if user_id:
-                user = await find_user_by_external_id(
-                    str(user_id))
+                user = await admin_api.get_user_by_external_id(str(user_id))
             if user:
                 new_lang = 'ru'  # user.language
             translation.activate(new_lang)

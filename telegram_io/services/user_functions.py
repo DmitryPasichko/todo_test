@@ -1,130 +1,137 @@
-import datetime
-
-# from channels.db import database_sync_to_async
-# from django.db.models import Q
-#
-# from RaccoonPayWebService.models.client_profile import Profile
-# from RaccoonPayWebService.models.messengers import MessengerInfo
-# from RaccoonPayWebService.models.operation_tariffs import TYPE_CHOICES
-# from RaccoonPayWebService.models.transactions import Transaction
+import os
+import redis
+import aiohttp
+from telegram_io.dtos import ProfileDto
 
 
-async def get_profile_balance_by_external_id(external_id: str):
-    user = await find_user_by_external_id(external_id)
-    if user:
-        return user.balance.amount
-    else:
-        return 0.00
+GET_TOKEN_URL = "/api/v1/token/"
+USER_URL = "/shop/user/"
+
+rc = redis.Redis()
 
 
-async def find_user_by_external_id(external_id: str):
-    pass
-# async def find_user_by_external_id(external_id: str) -> Profile:
-#     mi = await MessengerInfo.objects.filter(external_user_id=external_id).afirst()
-#     if not mi:
-#         return None
-#     user = Profile.objects.filter(registered_messengers=mi) | Profile.objects.filter(
-#         main_messenger=mi
-#     )
-#     return await user.afirst()
+def get_base_url():
+    return os.getenv("BASE_URL")
 
 
-async def find_user_by_phone_number(phone_number: str):
-    pass
-# async def find_user_by_phone_number(phone_number: str) -> Profile:
-#     user = Profile.objects.filter(phone_number=phone_number)
-#     if not user:
-#         return None
-#     return await user.afirst()
+class AuthorizationMixin:
+    ADMIN_TOKEN_KEY: str = "admin_key"
+
+    async def get_user_token(self, login: str, password: str, redis_key: str) -> str:
+        token = self.__get_token_redis(redis_key)
+
+        if not token:
+            token = await self.__get_token_api(login, password)
+            if token:
+                self.__set_token_redis(redis_key, token)
+        return token
+
+    @staticmethod
+    def __get_token_exp_time() -> int:
+        value = os.getenv("ACCESS_TOKEN_LIFETIME_SECONDS")
+        return int(value) if value else 3600
+
+    @staticmethod
+    async def __get_token_api(login: str, password: str) -> str:
+        url = get_base_url() + GET_TOKEN_URL
+        token = ""
+        data = {
+            "username": login,
+            "password": password,
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=data) as response:
+                if response.status in [200, 201]:
+                    access_token = await response.json()
+                    token = f"Bearer {access_token.get('access', '')}"
+        return token
+
+    @staticmethod
+    def __get_token_redis(key: str) -> str:
+        value = rc.get(key)
+        return value.decode("utf-8") if value else ""
+
+    def __set_token_redis(self, key: str, token: str) -> None:
+        rc.set(key, token, ex=self.__get_token_exp_time())
 
 
-async def is_user_exists(external_id: str) -> bool:
-    if await find_user_by_external_id(external_id):
-        return True
-    return False
+class AdminApiSingleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            instance = super().__call__(*args, **kwargs)
+            cls._instances[cls] = instance
+        return cls._instances[cls]
 
 
-def get_user_transaction(
-    user, n_last_transactions=0, from_date=None, to_date=None
-):
-    pass
-# def get_user_transaction(
-#     user: Profile, n_last_transactions=0, from_date=None, to_date=None
-# ) -> Transaction:
-#     condition = Q()
-#     condition.add(Q(**{"to_user": user}), Q.OR)
-#     if n_last_transactions:
-#         return Transaction.objects.filter(condition).order_by("-create_date")[
-#             :n_last_transactions
-#         ]
-#     if from_date and to_date:
-#         to_date = to_date + datetime.timedelta(days=1)
-#         condition.add(
-#             Q(**{"create_date" + "__gte": from_date, "create_date" + "__lte": to_date}),
-#             Q.AND,
-#         )
-#         return Transaction.objects.filter(condition)
+class AdminApi(AuthorizationMixin, metaclass=AdminApiSingleton):
+    ADMIN_TOKEN_KEY: str = "admin_key"
 
-def get_report_IOBytes_from_transactions(transactions) -> str:
-    pass
-# @database_sync_to_async
-# def get_report_IOBytes_from_transactions(transactions: Transaction) -> str:
-#     import io
-#     import pandas as pd
-#     import pdfkit
-#
-#     df = pd.DataFrame(
-#         transactions.values("create_date", "amount", "currency", "tx_type")
-#     )
-#     towrite = io.StringIO()
-#     tx_type_dict = {}
-#     for tup in TYPE_CHOICES:
-#         tx_type_dict.update({str(tup[0]): str(tup[1])})
-#     if not df.empty:
-#         df["tx_type"] = df["tx_type"].astype(str)
-#         df.replace({"tx_type": tx_type_dict}, inplace=True)
-#         df = df.rename(
-#             {
-#                 "create_date": "Create Date",
-#                 "amount": "Amount",
-#                 "currency": "Currency",
-#                 "tx_type": "Operation Type",
-#             },
-#             axis=1,
-#         )
-#     df.to_html(towrite)
-#     byte_report_string = pdfkit.from_string(
-#         towrite.getvalue(),
-#         False,
-#         options={
-#             "page-size": "Letter",
-#             "margin-top": "0.75in",
-#             "margin-right": "0.75in",
-#             "margin-bottom": "0.75in",
-#             "margin-left": "0.75in",
-#             "encoding": "UTF-8",
-#             "no-outline": None,
-#         },
-#     )
-#     base_report = io.BytesIO(byte_report_string)
-#     base_report.seek(0)
-#     return base_report
+    async def get_user_by_phone(self, phone: str) -> ProfileDto | None:
+        result = await self.__get_user_by_phone_or_ext_id("phone", phone)
+        return result
+
+    async def get_user_by_external_id(self, external_id) -> ProfileDto | None:
+        result = await self.__get_user_by_phone_or_ext_id("external_id", external_id)
+        return result
+
+    async def create_new_user(self, profile: ProfileDto):
+        headers = await self.__get_headers()
+        data = profile.dict()
+        url = get_base_url() + USER_URL
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=data, headers=headers) as response:
+                if response.status in [200, 201]:
+                    resp = await response.json()
+                    profile.id = resp.get("id")
+
+    async def get_profile_balance_by_external_id(self, external_id: str) -> float:
+        user = await self.get_user_by_external_id(external_id)
+        if user:
+            return user.balance.amount
+        else:
+            return 0.00
+
+    async def is_user_exists(self, external_id: str) -> bool:
+        if await self.get_user_by_external_id(external_id):
+            return True
+        return False
+
+    async def __get_user_by_phone_or_ext_id(self, key, value) -> ProfileDto:
+        result = None
+        headers = await self.__get_headers()
+        url = get_base_url() + USER_URL + f"?{key}={value}"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers) as response:
+                if response.status in [200, 201]:
+                    resp = await response.json()
+                    if len(resp) >0:
+                        result = ProfileDto(**resp[0])
+        return result
+
+    async def __get_token(self) -> str:
+        return await self.get_user_token(
+            os.getenv("BACKEND_LOGIN"),
+            os.getenv("BACKEND_PASSWORD"),
+            self.ADMIN_TOKEN_KEY,
+        )
+
+    async def __get_headers(self) -> dict:
+        token = await self.__get_token()
+        return {
+            "Authorization": token
+        }
 
 
-def get_current_balance_message(current_balance: float) -> str:
-    return "Your current balance: {}".format(current_balance)
+class UserApi(AuthorizationMixin):
+    def __init__(self, login: str, password: str) -> None:
+        self.login = login
+        self.password = password
+        self.redis_token_key = f"token_{login}"
 
-
-def get_profile_info(user) -> str:
-    pass
-
-# def get_profile_info(user: Profile) -> str:
-#     return (
-#         "Your Account data is:\nFirst name: {}\nLast name: {}\nPhone number: {}\nCountry: {}\nCurrency: {}"
-#     ).format(
-#         user.first_name,
-#         user.last_name,
-#         user.phone_number,
-#         user.country,
-#         user.balance_currency,
-#     )
+    async def get_token(self) -> str:
+        return await self.get_user_token(
+            self.login, self.password, self.redis_token_key
+        )
